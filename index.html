@@ -105,11 +105,9 @@
     /* ===================== スマホ版のスタイル ===================== */
     /* 画面幅が600px以下の場合、PC版を非表示 + キャプチャ画像を表示 */
     @media (max-width: 600px) {
-      /* PC版コンテナを隠す */
       #container {
-        display: none;
+        display: none; /* PC版を隠す */
       }
-      /* スマホ版でキャプチャ画像を表示 */
       #mobileCaptureImg {
         display: block;
         width: 100%;
@@ -182,11 +180,20 @@
        appId: "1:491087347583:web:64f812b63ad8b6ac0be44a",
        measurementId: "G-D5H647GG6L"
      };
-    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    const bgImage = document.getElementById("bgImage");
+    let imageLoaded = false;
+
+    // 画像がロード完了したらフラグを立てる
+    bgImage.onload = () => {
+      imageLoaded = true;
+      console.log("画像読み込み完了");
+    };
+
     // Firestoreのデータを取得して、PC版のテキストを更新
+    // 画像＆テキスト更新後、スマホの場合は少し待ってから Canvasキャプチャ
     function fetchTextFromFirestore() {
       db.collection("train_ticket").doc("page_1").onSnapshot((doc) => {
         if (doc.exists) {
@@ -202,9 +209,15 @@
           document.getElementById("group_name_input").value = data.group_name || "";
           document.getElementById("group_name2_input").value = data.group_name2 || "";
 
-          // スマホ版の場合はキャプチャを再生成
+          // スマホならキャプチャ生成（画像ロード完了を待つ）
           if (window.innerWidth <= 600) {
-            generateCanvasCapture();
+            setTimeout(() => {
+              if (imageLoaded) {
+                generateCanvasCapture();
+              } else {
+                console.log("画像がまだロードされていません");
+              }
+            }, 500); // 0.5秒待ってからキャプチャ
           }
         }
       });
@@ -223,18 +236,17 @@
 
     // PC版のレイアウトをCanvasにキャプチャし、スマホ版で表示
     function generateCanvasCapture() {
-      // 背景画像 + テキストオーバーレイをまとめてキャプチャ
+      console.log("Canvasキャプチャ開始");
       const hiddenCanvas = document.getElementById("hiddenCanvas");
       const ctx = hiddenCanvas.getContext("2d");
-      const bgImage = document.getElementById("bgImage");
 
-      // 画像サイズを取得
+      // 画像サイズを取得（naturalWidth / naturalHeight）
       const w = bgImage.naturalWidth || 600;
-      const h = bgImage.naturalHeight || 800; // 適宜調整
+      const h = bgImage.naturalHeight || 800; // 画像の縦サイズに合わせて調整
 
       hiddenCanvas.width = w;
       hiddenCanvas.height = h;
-      // まず背景画像を描画
+      // 背景画像を描画
       ctx.drawImage(bgImage, 0, 0, w, h);
 
       // テキスト要素をCanvasに書き込む
@@ -247,13 +259,14 @@
         const fontSize = style.fontSize;
         ctx.font = `${fontSize} Arial`;
         ctx.fillStyle = color;
-        // テキストを( left, top + 20 )あたりに描画（微調整）
+        // テキストを( left, top+20 )あたりに描画（微調整）
         ctx.fillText(el.innerText, left, top + 20);
       });
 
       // CanvasをPNG化して <img> に表示
       const dataURL = hiddenCanvas.toDataURL("image/png");
       document.getElementById("mobileCaptureImg").src = dataURL;
+      console.log("Canvasキャプチャ完了");
     }
 
     // 初期化
