@@ -10,13 +10,15 @@
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
   <style>
-    body { font-family: Arial, sans-serif; display: flex; justify-content: center; gap: 20px; }
-    #form-container { width: 300px; }
-    #canvas-container { position: relative; display: inline-block; }
+    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+    #container { display: flex; flex-direction: row; gap: 20px; width: 90%; max-width: 1200px; }
 
-    #bgImage { width: 100%; max-width: 900px; }
+    #form-container { width: 100%; max-width: 300px; }
+    #canvas-container { position: relative; flex-grow: 1; max-width: 900px; }
 
-    /* 🔥 Firestore 連携テキスト */
+    #bgImage { width: 100%; height: auto; }
+
+    /* 🔥 共通のテキストスタイル */
     .text-overlay {
       position: absolute;
       font-weight: bold;
@@ -29,11 +31,11 @@
       padding: 5px;
     }
 
-    /* ✅ 各テキストの枠サイズ */
-    .travel_start { color: blue; top: 10%; left: 55%; width: 150px; height: 40px; }
-    .travel_end { color: green; top: 10%; left: 70%; width: 150px; height: 40px; }
-    .group_name { color: red; top: 15%; left: 50%; width: 200px; height: 50px; }
-    .group_name2 { color: purple; top: 17%; left: 50%; width: 250px; height: 60px; }
+    /* ✅ 各テキストの相対的な配置 */
+    .travel_start { color: blue; width: 15vw; height: 4vw; top: 8%; left: 50%; font-size: 2vw; }
+    .travel_end { color: green; width: 15vw; height: 4vw; top: 8%; left: 70%; font-size: 2vw; }
+    .group_name { color: red; width: 20vw; height: 5vw; top: 14%; left: 50%; font-size: 2.5vw; }
+    .group_name2 { color: purple; width: 25vw; height: 6vw; top: 18%; left: 50%; font-size: 2vw; }
 
     /* ✅ 入力フォームのスタイル */
     .input-group { margin-bottom: 10px; }
@@ -41,43 +43,52 @@
     input { width: 100%; padding: 8px; font-size: 14px; }
     button { width: 100%; padding: 10px; background-color: #28a745; color: white; font-size: 16px; border: none; cursor: pointer; }
     button:hover { background-color: #218838; }
+
+    /* 📱 スマホ対応（画面幅が 600px 以下の時） */
+    @media (max-width: 600px) {
+      #container { flex-direction: column; align-items: center; }
+      #form-container { width: 100%; text-align: center; }
+      .text-overlay { font-size: 3vw; width: 50vw; height: 6vw; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- ✅ 入力フォーム（Firestore連携） -->
-  <div id="form-container">
-    <h2>データ入力</h2>
-    <div class="input-group">
-      <label for="travel_start_input">旅行開始日</label>
-      <input type="text" id="travel_start_input">
+  <div id="container">
+    <!-- ✅ 入力フォーム -->
+    <div id="form-container">
+      <h2>データ入力</h2>
+      <div class="input-group">
+        <label for="travel_start_input">旅行開始日</label>
+        <input type="text" id="travel_start_input">
+      </div>
+      <div class="input-group">
+        <label for="travel_end_input">旅行終了日</label>
+        <input type="text" id="travel_end_input">
+      </div>
+      <div class="input-group">
+        <label for="group_name_input">団体名</label>
+        <input type="text" id="group_name_input">
+      </div>
+      <div class="input-group">
+        <label for="group_name2_input">団体名2</label>
+        <input type="text" id="group_name2_input">
+      </div>
+      <button onclick="saveToFirestore()">Firestoreに保存</button>
     </div>
-    <div class="input-group">
-      <label for="travel_end_input">旅行終了日</label>
-      <input type="text" id="travel_end_input">
-    </div>
-    <div class="input-group">
-      <label for="group_name_input">団体名</label>
-      <input type="text" id="group_name_input">
-    </div>
-    <div class="input-group">
-      <label for="group_name2_input">団体名2</label>
-      <input type="text" id="group_name2_input">
-    </div>
-    <button onclick="saveToFirestore()">Firestoreに保存</button>
-  </div>
 
-  <!-- ✅ PNG 画像とテキスト -->
-  <div id="canvas-container">
-    <img id="bgImage" src="template.png" alt="JR団券申込書">
-    <div class="text-overlay travel_start" id="travel_start">日付未設定</div>
-    <div class="text-overlay travel_end" id="travel_end">日付未設定</div>
-    <div class="text-overlay group_name" id="group_name">団体名未設定</div>
-    <div class="text-overlay group_name2" id="group_name2">ここに団体名を記入</div>
+    <!-- ✅ PNG 画像とテキスト -->
+    <div id="canvas-container">
+      <img id="bgImage" src="template.png" alt="JR団券申込書">
+      <div class="text-overlay travel_start" id="travel_start">日付未設定</div>
+      <div class="text-overlay travel_end" id="travel_end">日付未設定</div>
+      <div class="text-overlay group_name" id="group_name">団体名未設定</div>
+      <div class="text-overlay group_name2" id="group_name2">ここに団体名を記入</div>
+    </div>
   </div>
 
   <script>
-    // 🔥 Firebase 設定（自分の Firebase 設定を入力）
+    // 🔥 Firebase 設定
      const firebaseConfig = {
        apiKey: "AIzaSyBYtkWuK0sbCYyQcVhLeFWCPhU7GhMG8pg",
        authDomain: "exceldisplay-505fc.firebaseapp.com",
@@ -87,17 +98,12 @@
        appId: "1:491087347583:web:64f812b63ad8b6ac0be44a",
        measurementId: "G-D5H647GG6L"
      };
-
-    // Firebase 初期化
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // ✅ フォントサイズを自動調整
     function fitTextToContainer(element) {
       let parent = element.parentElement;
-      let fontSize = 24;
-      element.style.fontSize = fontSize + "px";
-
+      let fontSize = parseFloat(getComputedStyle(element).fontSize);
       while (element.scrollWidth > parent.clientWidth || element.scrollHeight > parent.clientHeight) {
         fontSize--;
         element.style.fontSize = fontSize + "px";
@@ -105,14 +111,10 @@
       }
     }
 
-    // 🔄 Firestore のデータを取得し、フォームと PNG に反映
     function fetchTextFromFirestore() {
-      console.log("🔍 Firestore からデータ取得を開始...");
       db.collection("train_ticket").doc("page_1").onSnapshot((doc) => {
         if (doc.exists) {
           const data = doc.data();
-          console.log("✅ Firestore のデータ:", data);
-
           let elements = [
             { id: "travel_start", input: "travel_start_input", text: data.travel_start || "日付未設定" },
             { id: "travel_end", input: "travel_end_input", text: data.travel_end || "日付未設定" },
@@ -125,15 +127,10 @@
             document.getElementById(el.input).value = el.text;
             fitTextToContainer(document.getElementById(el.id));
           });
-        } else {
-          console.log("⚠ Firestore にデータがありません");
         }
-      }, (error) => {
-        console.error("❌ Firestore のデータ取得エラー:", error);
       });
     }
 
-    // ✅ Firestore にデータを保存
     function saveToFirestore() {
       let newData = {
         travel_start: document.getElementById("travel_start_input").value,
@@ -142,14 +139,9 @@
         group_name2: document.getElementById("group_name2_input").value
       };
 
-      db.collection("train_ticket").doc("page_1").set(newData).then(() => {
-        console.log("✅ Firestore にデータを保存しました！");
-      }).catch(error => {
-        console.error("❌ Firestore への保存エラー:", error);
-      });
+      db.collection("train_ticket").doc("page_1").set(newData);
     }
 
-    // 🔄 Firestore のデータを取得（ページ読み込み時）
     fetchTextFromFirestore();
   </script>
 
