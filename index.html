@@ -46,12 +46,12 @@
     const canvas = document.getElementById("textCanvas");
     const ctx = canvas.getContext("2d");
 
-    // 🔍 デバッグ用の関数（Canvasサイズを確認）
+    // 🔍 デバッグ用: Canvasサイズをログ出力
     function logCanvasSize() {
       console.log("✅ Canvas サイズ:", canvas.width, "×", canvas.height);
     }
 
-    // 🔄 Firestore のデータを取得し、Canvas に描画
+    // 🔄 Firestore のデータを取得し、Canvas に描画（ガイド付き）
     function drawTextOnImage(data) {
       console.log("🔥 Firestoreのデータ取得:", data);
 
@@ -60,13 +60,28 @@
       ctx.font = "24px Arial";
       ctx.fillStyle = "red";
 
-      // 事前に座標を決めて描画
-      ctx.fillText(data.travel_start || "日付未設定", 500, 60);  // 旅行開始日
-      ctx.fillText(data.travel_end || "日付未設定", 650, 60);    // 旅行終了日
-      ctx.fillText(data.group_name || "団体名未設定", 500, 100);  // 団体名
-      ctx.fillText(data.group_name2 || "団体名未設定", 500, 140); // 団体名（別フィールド）
+      // 📍 テキスト位置の定義（X, Yを調整する場合はここを変更）
+      const textPositions = [
+        { text: data.travel_start || "日付未設定", x: 500, y: 60 },
+        { text: data.travel_end || "日付未設定", x: 650, y: 60 },
+        { text: data.group_name || "団体名未設定", x: 500, y: 100 },
+        { text: data.group_name2 || "団体名未設定", x: 500, y: 140 }
+      ];
 
-      console.log("✅ テキストを描画しました！");
+      textPositions.forEach(pos => {
+        // 🔴 テキストを描画
+        ctx.fillText(pos.text, pos.x, pos.y);
+
+        // 🔵 ガイド線（現在の枠の位置を視覚化）
+        ctx.strokeStyle = "blue"; // ガイド線の色
+        ctx.lineWidth = 1;
+        ctx.strokeRect(pos.x - 2, pos.y - 20, 150, 30); // 枠を描画（横150px, 縦30px）
+
+        // 🔽 コンソールに座標を表示
+        console.log(`📍 ${pos.text}: X=${pos.x}, Y=${pos.y}`);
+      });
+
+      console.log("✅ テキストの位置をガイド表示しました！");
     }
 
     // Firestore からデータを取得し、表示
