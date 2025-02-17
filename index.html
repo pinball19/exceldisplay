@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JR団券申込書</title>
+  <title>JR団券申込書（Firestore 連携）</title>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -21,7 +21,7 @@
   <h1>JR団券申込書（Firestore 連携）</h1>
 
   <div id="canvas-container">
-    <img id="bgImage" src="template.png" alt="JR団券申込書">
+    <img id="bgImage" src="images/template.png" alt="JR団券申込書">
     <canvas id="textCanvas"></canvas>
   </div>
 
@@ -41,39 +41,57 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 🔄 Firestore からデータを取得し、Canvas に描画
-    function drawTextOnImage(data) {
-      const img = document.getElementById("bgImage");
-      const canvas = document.getElementById("textCanvas");
-      const ctx = canvas.getContext("2d");
+    // 画像・キャンバス要素の取得
+    const img = document.getElementById("bgImage");
+    const canvas = document.getElementById("textCanvas");
+    const ctx = canvas.getContext("2d");
 
-      // キャンバスサイズを画像と同じに設定
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      // 透明背景のキャンバスにテキストを描画
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = "20px Arial";
-      ctx.fillStyle = "red";
-
-      // 事前に座標を決めておく（座標をコード内で固定）
-      ctx.fillText(data.travel_start, 500, 60);  // 旅行開始日
-      ctx.fillText(data.travel_end, 650, 60);    // 旅行終了日
-      ctx.fillText(data.group_name, 500, 100);   // 団体名
-      ctx.fillText(data.group_name2, 500, 140);  // 団体名（別フィールド）
+    // 🔍 デバッグ用の関数（Canvasサイズを確認）
+    function logCanvasSize() {
+      console.log("✅ Canvas サイズ:", canvas.width, "×", canvas.height);
     }
 
-    // Firestore からテキストを取得し、表示
+    // 🔄 Firestore のデータを取得し、Canvas に描画
+    function drawTextOnImage(data) {
+      console.log("🔥 Firestoreのデータ取得:", data);
+
+      // キャンバスをクリア
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = "24px Arial";
+      ctx.fillStyle = "red";
+
+      // 事前に座標を決めて描画
+      ctx.fillText(data.travel_start || "日付未設定", 500, 60);  // 旅行開始日
+      ctx.fillText(data.travel_end || "日付未設定", 650, 60);    // 旅行終了日
+      ctx.fillText(data.group_name || "団体名未設定", 500, 100);  // 団体名
+      ctx.fillText(data.group_name2 || "団体名未設定", 500, 140); // 団体名（別フィールド）
+
+      console.log("✅ テキストを描画しました！");
+    }
+
+    // Firestore からデータを取得し、表示
     function fetchTextFromFirestore() {
+      console.log("🔍 Firestore からデータ取得を開始...");
       db.collection("train_ticket").doc("page_1").onSnapshot((doc) => {
         if (doc.exists) {
+          console.log("✅ Firestore のデータを取得しました！");
           drawTextOnImage(doc.data());
+        } else {
+          console.log("⚠ Firestore にデータがありません");
         }
+      }, (error) => {
+        console.error("❌ Firestore のデータ取得エラー:", error);
       });
     }
 
-    // 初回実行
-    fetchTextFromFirestore();
+    // 画像がロードされたらキャンバスサイズを調整し、データを取得
+    img.onload = function() {
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      logCanvasSize(); // Canvas のサイズを確認
+      fetchTextFromFirestore();
+    };
+
   </script>
 
 </body>
