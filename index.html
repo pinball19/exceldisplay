@@ -21,21 +21,20 @@
   <h1>JR団券申込書（Firestore 連携）</h1>
 
   <div id="canvas-container">
-    <img id="bgImage" src="template.png" alt="JR団券申込書">
+    <img id="bgImage" src="images/template.png" alt="JR団券申込書">
     <canvas id="textCanvas"></canvas>
   </div>
 
   <script>
     // 🔥 Firebase 設定（自分の Firebase の設定を入力）
-     const firebaseConfig = {
-       apiKey: "AIzaSyBYtkWuK0sbCYyQcVhLeFWCPhU7GhMG8pg",
-       authDomain: "exceldisplay-505fc.firebaseapp.com",
-       projectId: "exceldisplay-505fc",
-       storageBucket: "exceldisplay-505fc.firebasestorage.app",
-       messagingSenderId: "491087347583",
-       appId: "1:491087347583:web:64f812b63ad8b6ac0be44a",
-       measurementId: "G-D5H647GG6L"
-     };
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
     // Firebase 初期化
     firebase.initializeApp(firebaseConfig);
@@ -46,12 +45,12 @@
     const canvas = document.getElementById("textCanvas");
     const ctx = canvas.getContext("2d");
 
-    // 🔍 デバッグ用: Canvasサイズをログ出力
+    // 🔍 デバッグ用: Canvas サイズをログ出力
     function logCanvasSize() {
       console.log("✅ Canvas サイズ:", canvas.width, "×", canvas.height);
     }
 
-    // 🔄 Firestore のデータを取得し、Canvas に描画（ガイド付き）
+    // 🔄 Firestore のデータを取得し、Canvas に描画（リアルタイム調整対応）
     function drawTextOnImage(data) {
       console.log("🔥 Firestoreのデータ取得:", data);
 
@@ -60,22 +59,21 @@
       ctx.font = "24px Arial";
       ctx.fillStyle = "red";
 
-      // 📍 テキスト位置の定義（X, Yを調整する場合はここを変更）
-      const textPositions = [
-        { text: data.travel_start || "日付未設定", x: 500, y: 60 },
-        { text: data.travel_end || "日付未設定", x: 650, y: 60 },
-        { text: data.group_name || "団体名未設定", x: 500, y: 100 },
-        { text: data.group_name2 || "団体名未設定", x: 500, y: 140 }
+      // 📍 テキストの座標（X, Y を後から調整しやすいようにグローバル変数に）
+      window.textPositions = [
+        { text: data.travel_start || "日付未設定", x: 580, y: 220 },
+        { text: data.travel_end || "日付未設定", x: 740, y: 220 },
+        { text: data.group_name || "団体名未設定", x: 500, y: 320 },
+        { text: data.group_name2 || "団体名未設定", x: 500, y: 350 }
       ];
 
       textPositions.forEach(pos => {
-        // 🔴 テキストを描画
         ctx.fillText(pos.text, pos.x, pos.y);
 
-        // 🔵 ガイド線（現在の枠の位置を視覚化）
-        ctx.strokeStyle = "blue"; // ガイド線の色
+        // 🔵 ガイド線を表示
+        ctx.strokeStyle = "blue";
         ctx.lineWidth = 1;
-        ctx.strokeRect(pos.x - 2, pos.y - 20, 150, 30); // 枠を描画（横150px, 縦30px）
+        ctx.strokeRect(pos.x - 2, pos.y - 20, 150, 30);
 
         // 🔽 コンソールに座標を表示
         console.log(`📍 ${pos.text}: X=${pos.x}, Y=${pos.y}`);
@@ -101,6 +99,7 @@
 
     // 画像がロードされたらキャンバスサイズを調整し、データを取得
     img.onload = function() {
+      // 📌 🔥 ここが修正ポイント：naturalWidth / naturalHeight を適用
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
       logCanvasSize(); // Canvas のサイズを確認
