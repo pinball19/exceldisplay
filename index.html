@@ -11,12 +11,12 @@
 
   <style>
     body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; gap: 20px; }
-    #container { display: flex; flex-direction: row; gap: 20px; width: 90%; max-width: 1200px; }
+    #container { display: flex; flex-direction: row; gap: 20px; width: 900px; }
 
-    #form-container { width: 100%; max-width: 300px; }
-    #canvas-container { position: relative; flex-grow: 1; max-width: 900px; }
+    #form-container { width: 300px; }
+    #canvas-container { position: relative; width: 600px; }
 
-    #bgImage { width: 100%; height: auto; }
+    #bgImage { width: 600px; height: auto; }
 
     /* 🔥 共通のテキストスタイル */
     .text-overlay {
@@ -31,24 +31,26 @@
       padding: 5px;
     }
 
-    /* ✅ 各テキストの相対的な配置 */
-    .travel_start { color: blue; width: 15vw; height: 4vw; top: 8%; left: 50%; font-size: 2vw; }
-    .travel_end { color: green; width: 15vw; height: 4vw; top: 8%; left: 70%; font-size: 2vw; }
-    .group_name { color: red; width: 20vw; height: 5vw; top: 14%; left: 50%; font-size: 2.5vw; }
-    .group_name2 { color: purple; width: 25vw; height: 6vw; top: 18%; left: 50%; font-size: 2vw; }
+    /* ✅ PC 基準のテキスト配置 */
+    .travel_start { color: blue; width: 120px; height: 30px; top: 60px; left: 250px; font-size: 16px; }
+    .travel_end { color: green; width: 120px; height: 30px; top: 60px; left: 400px; font-size: 16px; }
+    .group_name { color: red; width: 180px; height: 40px; top: 110px; left: 250px; font-size: 18px; }
+    .group_name2 { color: purple; width: 220px; height: 50px; top: 160px; left: 250px; font-size: 16px; }
 
-    /* ✅ 入力フォームのスタイル */
-    .input-group { margin-bottom: 10px; }
-    label { display: block; font-weight: bold; margin-bottom: 5px; }
-    input { width: 100%; padding: 8px; font-size: 14px; }
-    button { width: 100%; padding: 10px; background-color: #28a745; color: white; font-size: 16px; border: none; cursor: pointer; }
-    button:hover { background-color: #218838; }
-
-    /* 📱 スマホ対応（画面幅が 600px 以下の時） */
+    /* 📱 スマホでも PC のサイズを維持 */
     @media (max-width: 600px) {
-      #container { flex-direction: column; align-items: center; }
+      body { flex-direction: column; align-items: center; }
+      #container { flex-direction: column; align-items: center; width: 600px; }
       #form-container { width: 100%; text-align: center; }
-      .text-overlay { font-size: 3vw; width: 50vw; height: 6vw; }
+      #canvas-container { width: 600px; }
+      #bgImage { width: 600px; }
+
+      /* ✅ 位置とサイズを PC 版に合わせる */
+      .text-overlay { font-size: 16px; width: 120px; height: 30px; }
+      .travel_start { top: 60px; left: 250px; }
+      .travel_end { top: 60px; left: 400px; }
+      .group_name { top: 110px; left: 250px; }
+      .group_name2 { top: 160px; left: 250px; }
     }
   </style>
 </head>
@@ -98,18 +100,9 @@
        appId: "1:491087347583:web:64f812b63ad8b6ac0be44a",
        measurementId: "G-D5H647GG6L"
      };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-
-    function fitTextToContainer(element) {
-      let parent = element.parentElement;
-      let fontSize = parseFloat(getComputedStyle(element).fontSize);
-      while (element.scrollWidth > parent.clientWidth || element.scrollHeight > parent.clientHeight) {
-        fontSize--;
-        element.style.fontSize = fontSize + "px";
-        if (fontSize < 10) break;
-      }
-    }
 
     function fetchTextFromFirestore() {
       db.collection("train_ticket").doc("page_1").onSnapshot((doc) => {
@@ -125,7 +118,6 @@
           elements.forEach(el => {
             document.getElementById(el.id).innerText = el.text;
             document.getElementById(el.input).value = el.text;
-            fitTextToContainer(document.getElementById(el.id));
           });
         }
       });
@@ -147,3 +139,4 @@
 
 </body>
 </html>
+
