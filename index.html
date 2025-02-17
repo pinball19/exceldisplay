@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <!-- 固定幅600pxのレイアウトを維持するためにviewportを固定 -->
-  <meta name="viewport" content="width=600">
+  <!-- 通常のviewport設定 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JR団券申込書（Firestore連携）</title>
 
   <!-- Firebase SDK (compat版) -->
@@ -11,28 +11,30 @@
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
   <style>
-    /* コンテナは固定600px幅。これにより、PC版と同じレイアウトがそのまま維持される */
+    /* PC版のレイアウトは固定600px */
     #container {
       width: 600px;
       margin: 0 auto;
-    }
-    /* 入力フォームは上部に配置 */
-    #form-container {
-      margin-bottom: 20px;
-    }
-    /* 背景画像とテキストオーバーレイを含むコンテナ */
-    #canvas-container {
       position: relative;
-      width: 600px;
     }
-    /* 背景画像は固定幅600px */
+    /* 入力フォームと画像＋テキストオーバーレイを横並びに配置 */
+    #container > #form-container {
+      float: left;
+      width: 300px;
+    }
+    #container > #canvas-container {
+      float: right;
+      width: 600px;
+      position: relative;
+    }
+    /* 背景画像は600px固定 */
     #bgImage {
       width: 600px;
       height: auto;
       object-fit: contain;
       display: block;
     }
-    /* PC版のテキストオーバーレイ（位置・サイズは固定） */
+    /* PC版のテキストオーバーレイ（位置・サイズ固定） */
     .text-overlay {
       position: absolute;
       font-weight: bold;
@@ -48,6 +50,26 @@
     .travel_end   { color: green; width: 120px; height: 30px; top: 60px; left: 400px; font-size: 16px; }
     .group_name   { color: red; width: 180px; height: 40px; top: 110px; left: 250px; font-size: 18px; }
     .group_name2  { color: purple; width: 220px; height: 50px; top: 160px; left: 250px; font-size: 16px; }
+    /* 入力フォームのスタイル */
+    #form-container {
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    .input-group { margin-bottom: 10px; }
+    label { display: block; font-weight: bold; margin-bottom: 5px; }
+    input { width: 100%; padding: 8px; font-size: 14px; }
+    button { width: 100%; padding: 10px; background-color: #28a745; color: white; font-size: 16px; border: none; cursor: pointer; }
+    button:hover { background-color: #218838; }
+    /* スマホ向け：PC版レイアウトのスケーリング（600pxを基準に固定表示） */
+    @media (max-width: 600px) {
+      /* 画面幅が600px未満の場合、コンテナ全体を縮小表示 */
+      #container {
+        transform: scale(0.6);
+        transform-origin: top left;
+        width: 600px; /* PC版サイズ固定 */
+      }
+      /* スクロールバーが出ないように全体をラップする場合、外側に横スクロールの親要素を作るのもあり */
+    }
   </style>
 </head>
 <body>
@@ -105,12 +127,12 @@
       db.collection("train_ticket").doc("page_1").onSnapshot((doc) => {
         if (doc.exists) {
           const data = doc.data();
-          // テキストオーバーレイの更新
+          // テキストオーバーレイ更新
           document.getElementById("travel_start").innerText = data.travel_start || "日付未設定";
           document.getElementById("travel_end").innerText = data.travel_end || "日付未設定";
           document.getElementById("group_name").innerText = data.group_name || "団体名未設定";
           document.getElementById("group_name2").innerText = data.group_name2 || "ここに団体名を記入";
-          // 入力フォームの値も更新
+          // 入力フォームの値更新
           document.getElementById("travel_start_input").value = data.travel_start || "";
           document.getElementById("travel_end_input").value = data.travel_end || "";
           document.getElementById("group_name_input").value = data.group_name || "";
@@ -119,7 +141,7 @@
       });
     }
 
-    // Firestore にデータを保存
+    // Firestoreにデータを保存
     function saveToFirestore() {
       const newData = {
         travel_start: document.getElementById("travel_start_input").value,
@@ -130,7 +152,6 @@
       db.collection("train_ticket").doc("page_1").set(newData);
     }
 
-    // 初回読み込み時にFirestoreからデータを取得
     fetchTextFromFirestore();
   </script>
 
