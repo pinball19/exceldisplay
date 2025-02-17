@@ -11,12 +11,17 @@
 
   <style>
     body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; gap: 20px; }
-    #container { display: flex; flex-direction: row; gap: 20px; width: 900px; }
+    #container { display: flex; flex-direction: row; gap: 20px; width: 900px; max-width: 100%; }
 
     #form-container { width: 300px; }
-    #canvas-container { position: relative; width: 600px; }
+    #canvas-container { position: relative; width: 600px; max-width: 100%; }
 
-    #bgImage { width: 600px; height: auto; }
+    /* ✅ スマホで画像が切れないように調整 */
+    #bgImage {
+      width: 100%; 
+      height: auto;
+      object-fit: contain; /* 画像を切らずにフィット */
+    }
 
     /* 🔥 共通のテキストスタイル */
     .text-overlay {
@@ -37,15 +42,17 @@
     .group_name { color: red; width: 180px; height: 40px; top: 110px; left: 250px; font-size: 18px; }
     .group_name2 { color: purple; width: 220px; height: 50px; top: 160px; left: 250px; font-size: 16px; }
 
-    /* 📱 スマホでも PC のサイズを維持 */
+    /* 📱 スマホ対応（画像が切れない & テキストも維持） */
     @media (max-width: 600px) {
       body { flex-direction: column; align-items: center; }
-      #container { flex-direction: column; align-items: center; width: 600px; }
+      #container { flex-direction: column; align-items: center; width: 100%; }
       #form-container { width: 100%; text-align: center; }
-      #canvas-container { width: 600px; }
-      #bgImage { width: 600px; }
+      #canvas-container { width: 100%; }
 
-      /* ✅ 位置とサイズを PC 版に合わせる */
+      /* ✅ スマホで画像をフル表示 */
+      #bgImage { max-width: 100%; }
+
+      /* ✅ 位置とサイズを PC 版と統一 */
       .text-overlay { font-size: 16px; width: 120px; height: 30px; }
       .travel_start { top: 60px; left: 250px; }
       .travel_end { top: 60px; left: 400px; }
@@ -139,4 +146,3 @@
 
 </body>
 </html>
-
