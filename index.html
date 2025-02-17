@@ -12,8 +12,14 @@
   <style>
     body { text-align: center; font-family: Arial, sans-serif; }
     #canvas-container { position: relative; display: inline-block; }
-    #textCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
-    input, button { margin: 10px; padding: 5px; }
+    #bgImage { width: 100%; max-width: 900px; }
+    .text-overlay {
+      position: absolute;
+      font-size: 18px;
+      color: red;
+      font-weight: bold;
+    }
+    .editable { cursor: pointer; }
   </style>
 </head>
 <body>
@@ -22,11 +28,16 @@
 
   <div id="canvas-container">
     <img id="bgImage" src="template.png" alt="JR団券申込書">
-    <canvas id="textCanvas"></canvas>
+    
+    <!-- 🔽 テキストを画像の上に配置 -->
+    <div class="text-overlay editable" id="travel_start" style="top: 10%; left: 55%;">日付未設定</div>
+    <div class="text-overlay editable" id="travel_end" style="top: 10%; left: 70%;">日付未設定</div>
+    <div class="text-overlay editable" id="group_name" style="top: 15%; left: 50%;">団体名未設定</div>
+    <div class="text-overlay editable" id="group_name2" style="top: 17%; left: 50%;">ここに団体名を記入</div>
   </div>
 
   <script>
-    // 🔥 Firebase 設定（自分の Firebase の設定を入力）
+    // 🔥 Firebase 設定（自分の Firebase 設定を入力）
      const firebaseConfig = {
        apiKey: "AIzaSyBYtkWuK0sbCYyQcVhLeFWCPhU7GhMG8pg",
        authDomain: "exceldisplay-505fc.firebaseapp.com",
@@ -41,55 +52,17 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 画像・キャンバス要素の取得
-    const img = document.getElementById("bgImage");
-    const canvas = document.getElementById("textCanvas");
-    const ctx = canvas.getContext("2d");
-
-    // 🔍 デバッグ用: Canvas サイズをログ出力
-    function logCanvasSize() {
-      console.log("✅ Canvas サイズ:", canvas.width, "×", canvas.height);
-    }
-
-    // 🔄 Firestore のデータを取得し、Canvas に描画（リアルタイム調整対応）
-    function drawTextOnImage(data) {
-      console.log("🔥 Firestoreのデータ取得:", data);
-
-      // キャンバスをクリア
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = "24px Arial";
-      ctx.fillStyle = "red";
-
-      // 📍 テキストの座標（X, Y を後から調整しやすいようにグローバル変数に）
-      window.textPositions = [
-        { text: data.travel_start || "日付未設定", x: 580, y: 220 },
-        { text: data.travel_end || "日付未設定", x: 740, y: 220 },
-        { text: data.group_name || "団体名未設定", x: 500, y: 320 },
-        { text: data.group_name2 || "団体名未設定", x: 500, y: 350 }
-      ];
-
-      textPositions.forEach(pos => {
-        ctx.fillText(pos.text, pos.x, pos.y);
-
-        // 🔵 ガイド線を表示
-        ctx.strokeStyle = "blue";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(pos.x - 2, pos.y - 20, 150, 30);
-
-        // 🔽 コンソールに座標を表示
-        console.log(`📍 ${pos.text}: X=${pos.x}, Y=${pos.y}`);
-      });
-
-      console.log("✅ テキストの位置をガイド表示しました！");
-    }
-
-    // Firestore からデータを取得し、表示
+    // 🔄 Firestore からデータを取得して画面に反映
     function fetchTextFromFirestore() {
       console.log("🔍 Firestore からデータ取得を開始...");
       db.collection("train_ticket").doc("page_1").onSnapshot((doc) => {
         if (doc.exists) {
-          console.log("✅ Firestore のデータを取得しました！");
-          drawTextOnImage(doc.data());
+          const data = doc.data();
+          console.log("✅ Firestore のデータ:", data);
+          document.getElementById("travel_start").innerText = data.travel_start || "日付未設定";
+          document.getElementById("travel_end").innerText = data.travel_end || "日付未設定";
+          document.getElementById("group_name").innerText = data.group_name || "団体名未設定";
+          document.getElementById("group_name2").innerText = data.group_name2 || "ここに団体名を記入";
         } else {
           console.log("⚠ Firestore にデータがありません");
         }
@@ -98,15 +71,8 @@
       });
     }
 
-    // 画像がロードされたらキャンバスサイズを調整し、データを取得
-    img.onload = function() {
-      // 📌 🔥 ここが修正ポイント：naturalWidth / naturalHeight を適用
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      logCanvasSize(); // Canvas のサイズを確認
-      fetchTextFromFirestore();
-    };
-
+    // 🔄 Firestore のデータを取得（ページ読み込み時）
+    fetchTextFromFirestore();
   </script>
 
 </body>
