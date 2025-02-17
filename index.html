@@ -12,18 +12,17 @@
   <style>
     body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; gap: 20px; }
     #container { display: flex; flex-direction: row; gap: 20px; width: 900px; max-width: 100%; }
-
     #form-container { width: 300px; }
     #canvas-container { position: relative; width: 600px; max-width: 100%; }
 
-    /* ✅ スマホで画像が切れないように調整 */
+    /* ✅ 画像がスマホで切れないように修正 */
     #bgImage {
       width: 100%; 
       height: auto;
-      object-fit: contain; /* 画像を切らずにフィット */
+      object-fit: contain;
     }
 
-    /* 🔥 共通のテキストスタイル */
+    /* 🔥 テキスト位置の完全固定 */
     .text-overlay {
       position: absolute;
       font-weight: bold;
@@ -36,35 +35,28 @@
       padding: 5px;
     }
 
-    /* ✅ PC 基準のテキスト配置 */
+    /* ✅ PC 版の固定配置 */
     .travel_start { color: blue; width: 120px; height: 30px; top: 60px; left: 250px; font-size: 16px; }
     .travel_end { color: green; width: 120px; height: 30px; top: 60px; left: 400px; font-size: 16px; }
     .group_name { color: red; width: 180px; height: 40px; top: 110px; left: 250px; font-size: 18px; }
     .group_name2 { color: purple; width: 220px; height: 50px; top: 160px; left: 250px; font-size: 16px; }
 
-    /* 📱 スマホ対応（画像が切れない & テキストも維持） */
+    /* 📱 スマホでも PC の画像をそのまま表示 */
     @media (max-width: 600px) {
       body { flex-direction: column; align-items: center; }
       #container { flex-direction: column; align-items: center; width: 100%; }
       #form-container { width: 100%; text-align: center; }
-      #canvas-container { width: 100%; }
-
-      /* ✅ スマホで画像をフル表示 */
-      #bgImage { max-width: 100%; }
-
-      /* ✅ 位置とサイズを PC 版と統一 */
-      .text-overlay { font-size: 16px; width: 120px; height: 30px; }
-      .travel_start { top: 60px; left: 250px; }
-      .travel_end { top: 60px; left: 400px; }
-      .group_name { top: 110px; left: 250px; }
-      .group_name2 { top: 160px; left: 250px; }
+      #canvas-container { display: none; } /* ✅ PC 版の HTML を非表示 */
+      #canvas-output { display: block; width: 100%; max-width: 600px; }
     }
+
+    /* PC では Canvas を非表示 */
+    #canvas-output { display: none; }
   </style>
 </head>
 <body>
 
   <div id="container">
-    <!-- ✅ 入力フォーム -->
     <div id="form-container">
       <h2>データ入力</h2>
       <div class="input-group">
@@ -96,6 +88,9 @@
     </div>
   </div>
 
+  <!-- ✅ スマホ表示用の Canvas 画像 -->
+  <canvas id="canvas-output"></canvas>
+
   <script>
     // 🔥 Firebase 設定
      const firebaseConfig = {
@@ -111,37 +106,29 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    function fetchTextFromFirestore() {
-      db.collection("train_ticket").doc("page_1").onSnapshot((doc) => {
-        if (doc.exists) {
-          const data = doc.data();
-          let elements = [
-            { id: "travel_start", input: "travel_start_input", text: data.travel_start || "日付未設定" },
-            { id: "travel_end", input: "travel_end_input", text: data.travel_end || "日付未設定" },
-            { id: "group_name", input: "group_name_input", text: data.group_name || "団体名未設定" },
-            { id: "group_name2", input: "group_name2_input", text: data.group_name2 || "ここに団体名を記入" }
-          ];
+    function generateCanvasImage() {
+      let canvas = document.getElementById("canvas-output");
+      let ctx = canvas.getContext("2d");
+      let img = document.getElementById("bgImage");
 
-          elements.forEach(el => {
-            document.getElementById(el.id).innerText = el.text;
-            document.getElementById(el.input).value = el.text;
-          });
-        }
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      let textElements = document.querySelectorAll(".text-overlay");
+      textElements.forEach(el => {
+        let { top, left, fontSize, color } = window.getComputedStyle(el);
+        ctx.fillStyle = color;
+        ctx.font = `${fontSize} Arial`;
+        ctx.fillText(el.innerText, parseInt(left), parseInt(top) + 20);
       });
     }
 
-    function saveToFirestore() {
-      let newData = {
-        travel_start: document.getElementById("travel_start_input").value,
-        travel_end: document.getElementById("travel_end_input").value,
-        group_name: document.getElementById("group_name_input").value,
-        group_name2: document.getElementById("group_name2_input").value
-      };
-
-      db.collection("train_ticket").doc("page_1").set(newData);
-    }
-
-    fetchTextFromFirestore();
+    window.onload = () => {
+      if (window.innerWidth <= 600) {
+        generateCanvasImage();
+      }
+    };
   </script>
 
 </body>
