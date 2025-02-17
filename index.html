@@ -18,13 +18,35 @@
     .text-overlay {
       position: absolute;
       font-weight: bold;
+      white-space: nowrap; /* ✅ 折り返しなし */
+      overflow: hidden; /* ✅ 枠外のテキストを隠す */
+      display: flex;
+      align-items: center; /* ✅ 縦方向の中央揃え */
+      justify-content: center; /* ✅ 横方向の中央揃え */
+      text-align: center;
+      padding: 5px;
     }
 
-    /* ✅ 各テキストのスタイルを個別指定 */
-    .travel_start { color: blue; font-size: 20px; top: 10%; left: 55%; }
-    .travel_end { color: green; font-size: 18px; top: 10%; left: 70%; }
-    .group_name { color: red; font-size: 22px; top: 15%; left: 50%; }
-    .group_name2 { color: purple; font-size: 16px; top: 17%; left: 50%; }
+    /* ✅ 各テキストの枠サイズ（フォントは JS で自動調整） */
+    .travel_start {
+      color: blue; top: 10%; left: 55%;
+      width: 150px; height: 40px;
+    }
+
+    .travel_end {
+      color: green; top: 10%; left: 70%;
+      width: 150px; height: 40px;
+    }
+
+    .group_name {
+      color: red; top: 15%; left: 50%;
+      width: 200px; height: 50px;
+    }
+
+    .group_name2 {
+      color: purple; top: 17%; left: 50%;
+      width: 250px; height: 60px;
+    }
   </style>
 </head>
 <body>
@@ -58,17 +80,41 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 🔄 Firestore からデータを取得して画面に反映
+    // ✅ テキストを枠に収めるためのフォントサイズ自動調整関数
+    function fitTextToContainer(element) {
+      let parent = element.parentElement; // 親要素（枠）
+      let fontSize = 24; // 初期フォントサイズ
+      element.style.fontSize = fontSize + "px";
+
+      // 🔄 枠を超えなくなるまでフォントサイズを小さくする
+      while (element.scrollWidth > parent.clientWidth || element.scrollHeight > parent.clientHeight) {
+        fontSize--;
+        element.style.fontSize = fontSize + "px";
+        if (fontSize < 10) break; // 最小サイズ制限（10px）
+      }
+    }
+
+    // 🔄 Firestore のデータを取得し、フォントサイズを調整する
     function fetchTextFromFirestore() {
       console.log("🔍 Firestore からデータ取得を開始...");
       db.collection("train_ticket").doc("page_1").onSnapshot((doc) => {
         if (doc.exists) {
           const data = doc.data();
           console.log("✅ Firestore のデータ:", data);
-          document.getElementById("travel_start").innerText = data.travel_start || "日付未設定";
-          document.getElementById("travel_end").innerText = data.travel_end || "日付未設定";
-          document.getElementById("group_name").innerText = data.group_name || "団体名未設定";
-          document.getElementById("group_name2").innerText = data.group_name2 || "ここに団体名を記入";
+
+          // 各テキストを更新
+          let elements = [
+            { id: "travel_start", text: data.travel_start || "日付未設定" },
+            { id: "travel_end", text: data.travel_end || "日付未設定" },
+            { id: "group_name", text: data.group_name || "団体名未設定" },
+            { id: "group_name2", text: data.group_name2 || "ここに団体名を記入" }
+          ];
+
+          elements.forEach(el => {
+            let element = document.getElementById(el.id);
+            element.innerText = el.text;
+            fitTextToContainer(element); // ✅ フォントサイズを自動調整
+          });
         } else {
           console.log("⚠ Firestore にデータがありません");
         }
