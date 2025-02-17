@@ -10,54 +10,66 @@
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
   <style>
-    body { text-align: center; font-family: Arial, sans-serif; }
+    body { font-family: Arial, sans-serif; display: flex; justify-content: center; gap: 20px; }
+    #form-container { width: 300px; }
     #canvas-container { position: relative; display: inline-block; }
+
     #bgImage { width: 100%; max-width: 900px; }
-    
-    /* 🔥 共通のテキストスタイル */
+
+    /* 🔥 Firestore 連携テキスト */
     .text-overlay {
       position: absolute;
       font-weight: bold;
-      white-space: nowrap; /* ✅ 折り返しなし */
-      overflow: hidden; /* ✅ 枠外のテキストを隠す */
+      white-space: nowrap;
+      overflow: hidden;
       display: flex;
-      align-items: center; /* ✅ 縦方向の中央揃え */
-      justify-content: center; /* ✅ 横方向の中央揃え */
+      align-items: center;
+      justify-content: center;
       text-align: center;
       padding: 5px;
     }
 
-    /* ✅ 各テキストの枠サイズ（フォントは JS で自動調整） */
-    .travel_start {
-      color: blue; top: 10%; left: 55%;
-      width: 150px; height: 40px;
-    }
+    /* ✅ 各テキストの枠サイズ */
+    .travel_start { color: blue; top: 10%; left: 55%; width: 150px; height: 40px; }
+    .travel_end { color: green; top: 10%; left: 70%; width: 150px; height: 40px; }
+    .group_name { color: red; top: 15%; left: 50%; width: 200px; height: 50px; }
+    .group_name2 { color: purple; top: 17%; left: 50%; width: 250px; height: 60px; }
 
-    .travel_end {
-      color: green; top: 10%; left: 70%;
-      width: 150px; height: 40px;
-    }
-
-    .group_name {
-      color: red; top: 15%; left: 50%;
-      width: 200px; height: 50px;
-    }
-
-    .group_name2 {
-      color: purple; top: 17%; left: 50%;
-      width: 250px; height: 60px;
-    }
+    /* ✅ 入力フォームのスタイル */
+    .input-group { margin-bottom: 10px; }
+    label { display: block; font-weight: bold; margin-bottom: 5px; }
+    input { width: 100%; padding: 8px; font-size: 14px; }
+    button { width: 100%; padding: 10px; background-color: #28a745; color: white; font-size: 16px; border: none; cursor: pointer; }
+    button:hover { background-color: #218838; }
   </style>
 </head>
 <body>
 
-  <h1>JR団券申込書（Firestore 連携）</h1>
+  <!-- ✅ 入力フォーム（Firestore連携） -->
+  <div id="form-container">
+    <h2>データ入力</h2>
+    <div class="input-group">
+      <label for="travel_start_input">旅行開始日</label>
+      <input type="text" id="travel_start_input">
+    </div>
+    <div class="input-group">
+      <label for="travel_end_input">旅行終了日</label>
+      <input type="text" id="travel_end_input">
+    </div>
+    <div class="input-group">
+      <label for="group_name_input">団体名</label>
+      <input type="text" id="group_name_input">
+    </div>
+    <div class="input-group">
+      <label for="group_name2_input">団体名2</label>
+      <input type="text" id="group_name2_input">
+    </div>
+    <button onclick="saveToFirestore()">Firestoreに保存</button>
+  </div>
 
+  <!-- ✅ PNG 画像とテキスト -->
   <div id="canvas-container">
-    <!-- ✅ 画像のパスを "template.png" に修正 -->
     <img id="bgImage" src="template.png" alt="JR団券申込書">
-    
-    <!-- ✅ 各テキストに個別スタイルを適用 -->
     <div class="text-overlay travel_start" id="travel_start">日付未設定</div>
     <div class="text-overlay travel_end" id="travel_end">日付未設定</div>
     <div class="text-overlay group_name" id="group_name">団体名未設定</div>
@@ -80,21 +92,20 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // ✅ テキストを枠に収めるためのフォントサイズ自動調整関数
+    // ✅ フォントサイズを自動調整
     function fitTextToContainer(element) {
-      let parent = element.parentElement; // 親要素（枠）
-      let fontSize = 24; // 初期フォントサイズ
+      let parent = element.parentElement;
+      let fontSize = 24;
       element.style.fontSize = fontSize + "px";
 
-      // 🔄 枠を超えなくなるまでフォントサイズを小さくする
       while (element.scrollWidth > parent.clientWidth || element.scrollHeight > parent.clientHeight) {
         fontSize--;
         element.style.fontSize = fontSize + "px";
-        if (fontSize < 10) break; // 最小サイズ制限（10px）
+        if (fontSize < 10) break;
       }
     }
 
-    // 🔄 Firestore のデータを取得し、フォントサイズを調整する
+    // 🔄 Firestore のデータを取得し、フォームと PNG に反映
     function fetchTextFromFirestore() {
       console.log("🔍 Firestore からデータ取得を開始...");
       db.collection("train_ticket").doc("page_1").onSnapshot((doc) => {
@@ -102,24 +113,39 @@
           const data = doc.data();
           console.log("✅ Firestore のデータ:", data);
 
-          // 各テキストを更新
           let elements = [
-            { id: "travel_start", text: data.travel_start || "日付未設定" },
-            { id: "travel_end", text: data.travel_end || "日付未設定" },
-            { id: "group_name", text: data.group_name || "団体名未設定" },
-            { id: "group_name2", text: data.group_name2 || "ここに団体名を記入" }
+            { id: "travel_start", input: "travel_start_input", text: data.travel_start || "日付未設定" },
+            { id: "travel_end", input: "travel_end_input", text: data.travel_end || "日付未設定" },
+            { id: "group_name", input: "group_name_input", text: data.group_name || "団体名未設定" },
+            { id: "group_name2", input: "group_name2_input", text: data.group_name2 || "ここに団体名を記入" }
           ];
 
           elements.forEach(el => {
-            let element = document.getElementById(el.id);
-            element.innerText = el.text;
-            fitTextToContainer(element); // ✅ フォントサイズを自動調整
+            document.getElementById(el.id).innerText = el.text;
+            document.getElementById(el.input).value = el.text;
+            fitTextToContainer(document.getElementById(el.id));
           });
         } else {
           console.log("⚠ Firestore にデータがありません");
         }
       }, (error) => {
         console.error("❌ Firestore のデータ取得エラー:", error);
+      });
+    }
+
+    // ✅ Firestore にデータを保存
+    function saveToFirestore() {
+      let newData = {
+        travel_start: document.getElementById("travel_start_input").value,
+        travel_end: document.getElementById("travel_end_input").value,
+        group_name: document.getElementById("group_name_input").value,
+        group_name2: document.getElementById("group_name2_input").value
+      };
+
+      db.collection("train_ticket").doc("page_1").set(newData).then(() => {
+        console.log("✅ Firestore にデータを保存しました！");
+      }).catch(error => {
+        console.error("❌ Firestore への保存エラー:", error);
       });
     }
 
