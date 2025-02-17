@@ -2,175 +2,102 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <!-- 通常のviewport設定 -->
+  <!-- スマホ対応 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JR団券申込書（Firestore連携）</title>
+  <title>JR団券申込書（Firestore 連携）</title>
 
-  <!-- Firebase SDK (compat版) -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
   <style>
-    /* PC版レイアウト（幅600px固定） */
-    #container {
-      width: 600px;
-      margin: 0 auto;
-      position: relative;
+    body {
+      text-align: center; 
+      font-family: Arial, sans-serif;
+      margin: 0; 
+      padding: 0;
     }
-    /* 入力フォーム + 背景画像を横並び */
-    #form-container {
-      float: left;
-      width: 300px;
-      box-sizing: border-box;
-      padding: 10px;
-    }
+
+    /* 画像＆テキストを重ねるコンテナ */
     #canvas-container {
-      float: right;
-      width: 600px;
       position: relative;
+      display: inline-block;
+      max-width: 900px;   /* 画像を大きくしすぎない上限 */
+      width: 100%;        /* ブラウザ幅に合わせて伸縮 */
+      margin: 0 auto;     /* 画面中央寄せ */
     }
 
-    /* 背景画像は600px幅固定 */
+    /* テンプレート画像 */
     #bgImage {
-      width: 600px;
-      height: auto;
-      object-fit: contain;
-      display: block;
+      width: 100%;        /* 親要素に対して常に100% */
+      display: block;     /* 余計な隙間を防ぐために block 表示 */
     }
 
-    /* テキストオーバーレイ（位置固定） */
+    /* テキストオーバーレイの共通スタイル */
     .text-overlay {
       position: absolute;
       font-weight: bold;
-      white-space: nowrap;
-      overflow: hidden;
+      white-space: nowrap;  /* 折り返しをさせない */
+      overflow: hidden;     /* はみ出たテキストは非表示 */
       display: flex;
-      align-items: center;
-      justify-content: center;
+      align-items: center;  /* 縦方向の中央揃え */
+      justify-content: center; /* 横方向の中央揃え */
       text-align: center;
       padding: 5px;
+      font-size: 24px;      /* fitTextToContainer() で自動縮小されるため、少し大きめ */
     }
+
+    /* 位置・サイズをパーセント指定に変更 */
     .travel_start {
       color: blue;
-      width: 120px; height: 30px;
-      top: 60px; left: 250px;
-      font-size: 16px;
+      top: 10%;     /* 画像の上から10% */
+      left: 55%;    /* 画像の左から55% */
+      width: 15%;   /* 画像の横幅の15% */
+      height: 5%;   /* 画像の縦幅の5% */
     }
+
     .travel_end {
       color: green;
-      width: 120px; height: 30px;
-      top: 60px; left: 400px;
-      font-size: 16px;
+      top: 10%;
+      left: 70%;
+      width: 15%;
+      height: 5%;
     }
+
     .group_name {
       color: red;
-      width: 180px; height: 40px;
-      top: 110px; left: 250px;
-      font-size: 18px;
+      top: 15%;
+      left: 50%;
+      width: 20%;
+      height: 6%;
     }
+
     .group_name2 {
       color: purple;
-      width: 220px; height: 50px;
-      top: 160px; left: 250px;
-      font-size: 16px;
-    }
-
-    /* フォームのスタイル */
-    .input-group {
-      margin-bottom: 10px;
-    }
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-    input {
-      width: 100%;
-      padding: 8px;
-      font-size: 14px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      background-color: #28a745;
-      color: white;
-      font-size: 16px;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #218838;
-    }
-
-    /* ===================== スマホ版のスタイル ===================== */
-    /* 画面幅が600px以下の場合、PC版を非表示 + キャプチャ画像を表示 */
-    @media (max-width: 600px) {
-      #container {
-        display: none; /* PC版を隠す */
-      }
-      #mobileCaptureImg {
-        display: block;
-        width: 100%;
-        max-width: 600px;
-        margin: 0 auto;
-      }
-    }
-
-    /* PC版ではスマホ用キャプチャ画像は非表示 */
-    #mobileCaptureImg {
-      display: none;
-    }
-
-    /* キャプチャ用Canvas（裏方で使うので非表示） */
-    #hiddenCanvas {
-      display: none;
+      top: 17%;
+      left: 50%;
+      width: 25%;
+      height: 7%;
     }
   </style>
 </head>
 <body>
 
-  <!-- PC版コンテナ -->
-  <div id="container">
-    <!-- 入力フォーム -->
-    <div id="form-container">
-      <h2>データ入力</h2>
-      <div class="input-group">
-        <label for="travel_start_input">旅行開始日</label>
-        <input type="text" id="travel_start_input">
-      </div>
-      <div class="input-group">
-        <label for="travel_end_input">旅行終了日</label>
-        <input type="text" id="travel_end_input">
-      </div>
-      <div class="input-group">
-        <label for="group_name_input">団体名</label>
-        <input type="text" id="group_name_input">
-      </div>
-      <div class="input-group">
-        <label for="group_name2_input">団体名2</label>
-        <input type="text" id="group_name2_input">
-      </div>
-      <button onclick="saveToFirestore()">Firestoreに保存</button>
-    </div>
+  <h1>JR団券申込書（Firestore 連携）</h1>
 
-    <!-- 背景画像 + テキストオーバーレイ -->
-    <div id="canvas-container">
-      <img id="bgImage" src="template.png" alt="JR団券申込書">
-      <div class="text-overlay travel_start" id="travel_start">日付未設定</div>
-      <div class="text-overlay travel_end" id="travel_end">日付未設定</div>
-      <div class="text-overlay group_name" id="group_name">団体名未設定</div>
-      <div class="text-overlay group_name2" id="group_name2">ここに団体名を記入</div>
-    </div>
+  <div id="canvas-container">
+    <!-- 画像パスは適宜書き換えてください -->
+    <img id="bgImage" src="template.png" alt="JR団券申込書">
+    
+    <!-- テキストオーバーレイ -->
+    <div class="text-overlay travel_start" id="travel_start">日付未設定</div>
+    <div class="text-overlay travel_end" id="travel_end">日付未設定</div>
+    <div class="text-overlay group_name" id="group_name">団体名未設定</div>
+    <div class="text-overlay group_name2" id="group_name2">ここに団体名を記入</div>
   </div>
 
-  <!-- スマホ版：PCレイアウトのキャプチャ画像を表示 -->
-  <img id="mobileCaptureImg" alt="スマホ版キャプチャ" />
-
-  <!-- キャプチャ用Canvas（裏方） -->
-  <canvas id="hiddenCanvas"></canvas>
-
   <script>
-    // Firebase 設定
+    // Firebase 設定 (ご自身のプロジェクト設定に置き換えてください)
      const firebaseConfig = {
        apiKey: "AIzaSyBYtkWuK0sbCYyQcVhLeFWCPhU7GhMG8pg",
        authDomain: "exceldisplay-505fc.firebaseapp.com",
@@ -180,96 +107,68 @@
        appId: "1:491087347583:web:64f812b63ad8b6ac0be44a",
        measurementId: "G-D5H647GG6L"
      };
+
+    // Firebase 初期化
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const bgImage = document.getElementById("bgImage");
-    let imageLoaded = false;
+    /**
+     * テキストを枠に収めるためのフォントサイズ自動調整関数
+     * テキスト要素自身の大きさとコンテンツの大きさを比較して、溢れるようなら縮小。
+     */
+    function fitTextToContainer(element) {
+      // 親要素のサイズを取る場合は element.parentElement でも可
+      // element 自身のボックスで判定したいなら下記のままでもOKです
+      let fontSize = 24; 
+      element.style.fontSize = fontSize + "px";
 
-    // 画像がロード完了したらフラグを立てる
-    bgImage.onload = () => {
-      imageLoaded = true;
-      console.log("画像読み込み完了");
-    };
+      // 一旦 getBoundingClientRect() を取る
+      let rect = element.getBoundingClientRect();
 
-    // Firestoreのデータを取得して、PC版のテキストを更新
-    // 画像＆テキスト更新後、スマホの場合は少し待ってから Canvasキャプチャ
+      // 枠を超えなくなるまでフォントサイズを小さくする
+      while (element.scrollWidth > rect.width || element.scrollHeight > rect.height) {
+        fontSize--;
+        element.style.fontSize = fontSize + "px";
+        if (fontSize < 10) break; // 最小サイズは10pxとする
+        rect = element.getBoundingClientRect();
+      }
+    }
+
+    /**
+     * Firestore のデータをリアルタイム取得し、テキスト要素に反映する
+     */
     function fetchTextFromFirestore() {
+      console.log("Firestore からデータ取得を開始...");
+
       db.collection("train_ticket").doc("page_1").onSnapshot((doc) => {
         if (doc.exists) {
           const data = doc.data();
-          // PC版テキスト更新
-          document.getElementById("travel_start").innerText = data.travel_start || "日付未設定";
-          document.getElementById("travel_end").innerText = data.travel_end || "日付未設定";
-          document.getElementById("group_name").innerText = data.group_name || "団体名未設定";
-          document.getElementById("group_name2").innerText = data.group_name2 || "ここに団体名を記入";
-          // フォームの値更新
-          document.getElementById("travel_start_input").value = data.travel_start || "";
-          document.getElementById("travel_end_input").value = data.travel_end || "";
-          document.getElementById("group_name_input").value = data.group_name || "";
-          document.getElementById("group_name2_input").value = data.group_name2 || "";
+          console.log("Firestore データ:", data);
 
-          // スマホならキャプチャ生成（画像ロード完了を待つ）
-          if (window.innerWidth <= 600) {
-            setTimeout(() => {
-              if (imageLoaded) {
-                generateCanvasCapture();
-              } else {
-                console.log("画像がまだロードされていません");
-              }
-            }, 500); // 0.5秒待ってからキャプチャ
-          }
+          // 各テキストを更新
+          let elements = [
+            { id: "travel_start", text: data.travel_start || "日付未設定" },
+            { id: "travel_end",   text: data.travel_end   || "日付未設定" },
+            { id: "group_name",   text: data.group_name   || "団体名未設定" },
+            { id: "group_name2",  text: data.group_name2  || "ここに団体名を記入" }
+          ];
+
+          // テキスト更新後、fitTextToContainer で自動調整
+          elements.forEach(el => {
+            let element = document.getElementById(el.id);
+            element.innerText = el.text;
+            fitTextToContainer(element);
+          });
+
+        } else {
+          console.log("Firestore にデータがありません");
         }
+      }, (error) => {
+        console.error("Firestore のデータ取得エラー:", error);
       });
     }
 
-    // Firestoreにデータを保存
-    function saveToFirestore() {
-      const newData = {
-        travel_start: document.getElementById("travel_start_input").value,
-        travel_end: document.getElementById("travel_end_input").value,
-        group_name: document.getElementById("group_name_input").value,
-        group_name2: document.getElementById("group_name2_input").value
-      };
-      db.collection("train_ticket").doc("page_1").set(newData);
-    }
-
-    // PC版のレイアウトをCanvasにキャプチャし、スマホ版で表示
-    function generateCanvasCapture() {
-      console.log("Canvasキャプチャ開始");
-      const hiddenCanvas = document.getElementById("hiddenCanvas");
-      const ctx = hiddenCanvas.getContext("2d");
-
-      // 画像サイズを取得（naturalWidth / naturalHeight）
-      const w = bgImage.naturalWidth || 600;
-      const h = bgImage.naturalHeight || 800; // 画像の縦サイズに合わせて調整
-
-      hiddenCanvas.width = w;
-      hiddenCanvas.height = h;
-      // 背景画像を描画
-      ctx.drawImage(bgImage, 0, 0, w, h);
-
-      // テキスト要素をCanvasに書き込む
-      const textElements = document.querySelectorAll(".text-overlay");
-      textElements.forEach(el => {
-        const style = window.getComputedStyle(el);
-        const left = parseInt(style.left);
-        const top = parseInt(style.top);
-        const color = style.color;
-        const fontSize = style.fontSize;
-        ctx.font = `${fontSize} Arial`;
-        ctx.fillStyle = color;
-        // テキストを( left, top+20 )あたりに描画（微調整）
-        ctx.fillText(el.innerText, left, top + 20);
-      });
-
-      // CanvasをPNG化して <img> に表示
-      const dataURL = hiddenCanvas.toDataURL("image/png");
-      document.getElementById("mobileCaptureImg").src = dataURL;
-      console.log("Canvasキャプチャ完了");
-    }
-
-    // 初期化
+    // ページ読み込み時に Firestore から値を取得
     fetchTextFromFirestore();
   </script>
 
