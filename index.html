@@ -5,24 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JR団券申込書（Firestore 連携）</title>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase SDK (compat版) -->
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
   <style>
-    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; gap: 20px; }
-    #container { display: flex; flex-direction: row; gap: 20px; width: 900px; max-width: 100%; }
-    #form-container { width: 300px; }
-    #canvas-container { position: relative; width: 600px; max-width: 100%; }
-
-    /* ✅ 画像がスマホで切れないように修正 */
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    #container {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      width: 900px;
+      max-width: 100%;
+    }
+    #form-container {
+      width: 300px;
+    }
+    #canvas-container {
+      position: relative;
+      width: 600px;
+      max-width: 600px;
+    }
+    /* 背景画像はPC版用 */
     #bgImage {
-      width: 100%; 
+      width: 600px;
       height: auto;
       object-fit: contain;
     }
-
-    /* 🔥 テキスト位置の完全固定 */
+    /* PC版のテキストオーバーレイ（固定レイアウト） */
     .text-overlay {
       position: absolute;
       font-weight: bold;
@@ -34,29 +50,90 @@
       text-align: center;
       padding: 5px;
     }
-
-    /* ✅ PC 版の固定配置 */
-    .travel_start { color: blue; width: 120px; height: 30px; top: 60px; left: 250px; font-size: 16px; }
-    .travel_end { color: green; width: 120px; height: 30px; top: 60px; left: 400px; font-size: 16px; }
-    .group_name { color: red; width: 180px; height: 40px; top: 110px; left: 250px; font-size: 18px; }
-    .group_name2 { color: purple; width: 220px; height: 50px; top: 160px; left: 250px; font-size: 16px; }
-
-    /* 📱 スマホでも PC の画像をそのまま表示 */
-    @media (max-width: 600px) {
-      body { flex-direction: column; align-items: center; }
-      #container { flex-direction: column; align-items: center; width: 100%; }
-      #form-container { width: 100%; text-align: center; }
-      #canvas-container { display: none; } /* ✅ PC 版の HTML を非表示 */
-      #canvas-output { display: block; width: 100%; max-width: 600px; }
+    .travel_start {
+      color: blue;
+      width: 120px; height: 30px;
+      top: 60px; left: 250px;
+      font-size: 16px;
     }
-
-    /* PC では Canvas を非表示 */
-    #canvas-output { display: none; }
+    .travel_end {
+      color: green;
+      width: 120px; height: 30px;
+      top: 60px; left: 400px;
+      font-size: 16px;
+    }
+    .group_name {
+      color: red;
+      width: 180px; height: 40px;
+      top: 110px; left: 250px;
+      font-size: 18px;
+    }
+    .group_name2 {
+      color: purple;
+      width: 220px; height: 50px;
+      top: 160px; left: 250px;
+      font-size: 16px;
+    }
+    /* 入力フォームのスタイル */
+    .input-group {
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #28a745;
+      color: white;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    /* スマホ表示用の調整 */
+    @media (max-width: 600px) {
+      #container {
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+      #form-container {
+        width: 100%;
+        text-align: center;
+      }
+      /* PC版の表示を隠す（ただし、DOM上には残す） */
+      #canvas-container {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+      /* スマホ用のキャプチャ画像を表示 */
+      #canvas-output {
+        display: block;
+        width: 100%;
+        max-width: 600px;
+      }
+    }
+    /* PC版ではスマホ用キャプチャ画像は非表示 */
+    #canvas-output {
+      display: none;
+    }
   </style>
 </head>
 <body>
 
   <div id="container">
+    <!-- 入力フォーム -->
     <div id="form-container">
       <h2>データ入力</h2>
       <div class="input-group">
@@ -78,7 +155,7 @@
       <button onclick="saveToFirestore()">Firestoreに保存</button>
     </div>
 
-    <!-- ✅ PNG 画像とテキスト -->
+    <!-- PC版用の表示：背景画像とテキストオーバーレイ -->
     <div id="canvas-container">
       <img id="bgImage" src="template.png" alt="JR団券申込書">
       <div class="text-overlay travel_start" id="travel_start">日付未設定</div>
@@ -88,11 +165,11 @@
     </div>
   </div>
 
-  <!-- ✅ スマホ表示用の Canvas 画像 -->
+  <!-- スマホ版用のキャプチャ画像表示用 Canvas -->
   <canvas id="canvas-output"></canvas>
 
   <script>
-    // 🔥 Firebase 設定
+    // Firebase 設定（各自の設定値に置き換えてください）
      const firebaseConfig = {
        apiKey: "AIzaSyBYtkWuK0sbCYyQcVhLeFWCPhU7GhMG8pg",
        authDomain: "exceldisplay-505fc.firebaseapp.com",
@@ -106,29 +183,72 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    // PC版のテキストは直接更新、スマホの場合はキャプチャ画像を再生成するために使用
+    function fetchTextFromFirestore() {
+      db.collection("train_ticket").doc("page_1").onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          let elements = [
+            { id: "travel_start", input: "travel_start_input", text: data.travel_start || "日付未設定" },
+            { id: "travel_end", input: "travel_end_input", text: data.travel_end || "日付未設定" },
+            { id: "group_name", input: "group_name_input", text: data.group_name || "団体名未設定" },
+            { id: "group_name2", input: "group_name2_input", text: data.group_name2 || "ここに団体名を記入" }
+          ];
+
+          elements.forEach(el => {
+            document.getElementById(el.id).innerText = el.text;
+            document.getElementById(el.input).value = el.text;
+          });
+          // スマホの場合、キャプチャ画像を更新
+          if(window.innerWidth <= 600) {
+            generateCanvasImage();
+          }
+        }
+      });
+    }
+
+    function saveToFirestore() {
+      let newData = {
+        travel_start: document.getElementById("travel_start_input").value,
+        travel_end: document.getElementById("travel_end_input").value,
+        group_name: document.getElementById("group_name_input").value,
+        group_name2: document.getElementById("group_name2_input").value
+      };
+
+      db.collection("train_ticket").doc("page_1").set(newData);
+    }
+
+    // スマホ用：PC版の表示を Canvas にキャプチャする関数
     function generateCanvasImage() {
       let canvas = document.getElementById("canvas-output");
       let ctx = canvas.getContext("2d");
       let img = document.getElementById("bgImage");
 
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
+      // ここではPC版の#canvas-containerがDOM上に存在している（ただし隠れている）
+      // Canvas のサイズを PC版の画像のサイズに合わせる
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      // 背景画像の描画
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
+      // PC版のテキストオーバーレイ要素をすべて取得し、Canvas に描画
       let textElements = document.querySelectorAll(".text-overlay");
       textElements.forEach(el => {
-        let { top, left, fontSize, color } = window.getComputedStyle(el);
-        ctx.fillStyle = color;
+        // 取得したスタイル値を利用
+        let computedStyle = window.getComputedStyle(el);
+        let fontSize = computedStyle.fontSize;
+        let color = computedStyle.color;
+        // Canvas にテキストを描画（top, left はピクセル値である必要があります）
+        let left = parseInt(computedStyle.left);
+        let top = parseInt(computedStyle.top);
         ctx.font = `${fontSize} Arial`;
-        ctx.fillText(el.innerText, parseInt(left), parseInt(top) + 20);
+        ctx.fillStyle = color;
+        // 微調整として、top に少しオフセットを加える（必要に応じて調整）
+        ctx.fillText(el.innerText, left, top + 20);
       });
     }
 
-    window.onload = () => {
-      if (window.innerWidth <= 600) {
-        generateCanvasImage();
-      }
-    };
+    fetchTextFromFirestore();
   </script>
 
 </body>
