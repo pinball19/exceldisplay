@@ -13,13 +13,18 @@
     body { text-align: center; font-family: Arial, sans-serif; }
     #canvas-container { position: relative; display: inline-block; }
     #bgImage { width: 100%; max-width: 900px; }
+    
+    /* 🔥 共通のテキストスタイル */
     .text-overlay {
       position: absolute;
-      font-size: 18px;
-      color: red;
       font-weight: bold;
     }
-    .editable { cursor: pointer; }
+
+    /* ✅ 各テキストのスタイルを個別指定 */
+    .travel_start { color: blue; font-size: 20px; top: 10%; left: 55%; }
+    .travel_end { color: green; font-size: 18px; top: 10%; left: 70%; }
+    .group_name { color: red; font-size: 22px; top: 15%; left: 50%; }
+    .group_name2 { color: purple; font-size: 16px; top: 17%; left: 50%; }
   </style>
 </head>
 <body>
@@ -27,13 +32,14 @@
   <h1>JR団券申込書（Firestore 連携）</h1>
 
   <div id="canvas-container">
+    <!-- ✅ 画像のパスを "template.png" に修正 -->
     <img id="bgImage" src="template.png" alt="JR団券申込書">
     
-    <!-- 🔽 テキストを画像の上に配置 -->
-    <div class="text-overlay editable" id="travel_start" style="top: 10%; left: 55%;">日付未設定</div>
-    <div class="text-overlay editable" id="travel_end" style="top: 10%; left: 70%;">日付未設定</div>
-    <div class="text-overlay editable" id="group_name" style="top: 15%; left: 50%;">団体名未設定</div>
-    <div class="text-overlay editable" id="group_name2" style="top: 17%; left: 50%;">ここに団体名を記入</div>
+    <!-- ✅ 各テキストに個別スタイルを適用 -->
+    <div class="text-overlay travel_start" id="travel_start">日付未設定</div>
+    <div class="text-overlay travel_end" id="travel_end">日付未設定</div>
+    <div class="text-overlay group_name" id="group_name">団体名未設定</div>
+    <div class="text-overlay group_name2" id="group_name2">ここに団体名を記入</div>
   </div>
 
   <script>
