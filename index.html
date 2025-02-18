@@ -1,42 +1,44 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excel編集 & 画像プレビュー & ダウンロード</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; border: 1px solid #ccc; }
-        td, th { border: 1px solid #ccc; padding: 8px; text-align: center; }
-        input, button { margin: 10px 0; padding: 10px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel編集 & 画像プレビュー & ダウンロード</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; border: 1px solid #ccc; }
+    td, th { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    input, button { margin: 10px 0; padding: 10px; }
+  </style>
 </head>
 <body>
 
-    <h1>Excel編集 & 画像プレビュー & ダウンロード</h1>
+  <h1>Excel編集 & 画像プレビュー & ダウンロード</h1>
 
-    <!-- Excelを読み込む -->
-    <button id="loadExcel">GitHubからExcelを取得</button>
+  <!-- Excelを読み込む -->
+  <button id="loadExcel">GitHubからExcelを取得</button>
 
-    <!-- Webで編集するための入力欄 -->
-    <input type="text" id="textInput" placeholder="A1セルの値を入力">
-    <button id="updateButton">セルを更新</button>
+  <!-- Webで編集するための入力欄 -->
+  <input type="text" id="textInput" placeholder="A1セルの値を入力">
+  <button id="updateButton">セルを更新</button>
 
-    <!-- Excelのプレビュー表示 -->
-    <div id="captureArea">
-        <table id="excelTable"></table>
-    </div>
+  <!-- Excelのプレビュー表示 -->
+  <div id="captureArea">
+    <table id="excelTable"></table>
+  </div>
 
-    <!-- 画像として保存ボタン -->
-    <button id="captureButton">画像として保存</button>
+  <!-- 画像として保存ボタン -->
+  <button id="captureButton">画像として保存</button>
 
-    <!-- 更新後のExcelをダウンロード -->
-    <button id="downloadButton">Excelをダウンロード</button>
+  <!-- 更新後のExcelをダウンロード -->
+  <button id="downloadButton">Excelをダウンロード</button>
 
-    <!-- 必要なライブラリ -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script type="module" src="app.js"></script>
+  <!-- 必要なライブラリ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- 修正済みの app.js を最後に読み込む -->
+  <script src="app.js"></script>
 
 </body>
 </html>
