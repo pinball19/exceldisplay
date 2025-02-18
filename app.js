@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 指定セル（A1）を更新
-    window.currentSheet["A1"] = { v: textInput };
+    window.currentSheet["H3"] = { v: textInput };
     displayTable(window.currentSheet);
   });
 
