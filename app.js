@@ -5,7 +5,6 @@ let selectedData = {}; // 変更されたセルのデータを保存
 let jsonData = []; // Excelデータの保持
 let columnWidths = {}; // 列幅を保存
 let rowHeights = {}; // 行高さを保存
-let merges = []; // セルの結合情報を保存
 
 // 📌 Excelファイルの読み込み
 document.getElementById("excelFileInput").addEventListener("change", async (event) => {
@@ -21,22 +20,19 @@ document.getElementById("excelFileInput").addEventListener("change", async (even
         const sheet = workbook.Sheets[sheetName];
         jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-        // 📌 列幅・行高さ・セルの結合情報を取得
+        // 📌 列幅・行高さを取得
         columnWidths = sheet["!cols"] || [];
         rowHeights = sheet["!rows"] || [];
-        merges = sheet["!merges"] || [];
 
         displayTable(jsonData);
     };
     reader.readAsArrayBuffer(file);
 });
 
-// 📌 Webページ上にテーブルを生成（セル編集可能 & 列幅・行高さ適用 & 結合対応）
+// 📌 Webページ上にテーブルを生成（セル編集可能 & 列幅・行高さ適用）
 function displayTable(data) {
     const table = document.getElementById("excelTable");
     table.innerHTML = "";
-    table.style.tableLayout = "fixed"; // 列幅を適用しやすくする
-    table.style.width = "100%";
 
     // 📌 列幅を適用
     if (columnWidths.length > 0) {
@@ -51,9 +47,6 @@ function displayTable(data) {
         table.appendChild(colgroup);
     }
 
-    // 📌 マージセルを管理するマップ（既に結合されたセルをスキップ）
-    let mergedCells = {};
-
     // 📌 各行を生成
     data.forEach((row, rowIndex) => {
         const tr = document.createElement("tr");
@@ -64,9 +57,6 @@ function displayTable(data) {
         }
 
         row.forEach((cell, colIndex) => {
-            // 📌 結合されたセルはスキップ
-            if (mergedCells[`${rowIndex}-${colIndex}`]) return;
-
             const td = document.createElement("td");
             td.contentEditable = true;
             td.textContent = cell || "";
@@ -75,23 +65,6 @@ function displayTable(data) {
             td.addEventListener("input", (event) => {
                 const newValue = event.target.textContent;
                 selectedData[`${rowIndex}-${colIndex}`] = newValue;
-            });
-
-            // 📌 結合情報を適用
-            merges.forEach((merge) => {
-                if (
-                    rowIndex >= merge.s.r &&
-                    rowIndex <= merge.e.r &&
-                    colIndex >= merge.s.c &&
-                    colIndex <= merge.e.c
-                ) {
-                    if (rowIndex === merge.s.r && colIndex === merge.s.c) {
-                        td.rowSpan = merge.e.r - merge.s.r + 1;
-                        td.colSpan = merge.e.c - merge.s.c + 1;
-                    } else {
-                        mergedCells[`${rowIndex}-${colIndex}`] = true;
-                    }
-                }
             });
 
             tr.appendChild(td);
